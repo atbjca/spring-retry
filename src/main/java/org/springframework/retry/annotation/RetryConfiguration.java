@@ -19,6 +19,7 @@ package org.springframework.retry.annotation;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -39,6 +40,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.ListableBeanFactory;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ImportAware;
 import org.springframework.context.annotation.Role;
@@ -57,9 +59,10 @@ import org.springframework.util.ReflectionUtils;
 import org.springframework.util.ReflectionUtils.MethodCallback;
 
 /**
- * Basic configuration for <code>@Retryable</code> processing. For stateful retry, if
- * there is a unique bean elsewhere in the context of type {@link RetryContextCache},
- * {@link MethodArgumentsKeyGenerator} or {@link NewMethodArgumentsIdentifier} it will be
+ * Basic configuration for <code>@Retryable</code> processing. Stateful retry uses a
+ * {@code retryContextCache} bean when present (or a unique cache bean for compatibility),
+ * while circuit breakers use a separate {@code circuitBreakerRetryContextCache} bean. A
+ * unique {@link MethodArgumentsKeyGenerator} or {@link NewMethodArgumentsIdentifier} is
  * used by the corresponding retry interceptor (otherwise sensible defaults are adopted).
  *
  * @author Dave Syer
@@ -73,15 +76,17 @@ import org.springframework.util.ReflectionUtils.MethodCallback;
 @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 @Component
 public class RetryConfiguration extends AbstractPointcutAdvisor
-		implements IntroductionAdvisor, BeanFactoryAware, InitializingBean, ImportAware {
+		implements IntroductionAdvisor, BeanFactoryAware, InitializingBean, SmartInitializingSingleton, ImportAware {
 
 	protected AnnotationAttributes enableRetry;
 
-	private Advice advice;
+	private AnnotationAwareRetryOperationsInterceptor advice;
 
 	private Pointcut pointcut;
 
 	private RetryContextCache retryContextCache;
+
+	private RetryContextCache circuitBreakerRetryContextCache;
 
 	private List<RetryListener> retryListeners;
 
@@ -101,10 +106,11 @@ public class RetryConfiguration extends AbstractPointcutAdvisor
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		this.retryContextCache = findBean(RetryContextCache.class);
+		this.retryContextCache = findBean(RetryContextCache.class, "retryContextCache", true);
+		this.circuitBreakerRetryContextCache = findBean(RetryContextCache.class, "circuitBreakerRetryContextCache",
+				false);
 		this.methodArgumentsKeyGenerator = findBean(MethodArgumentsKeyGenerator.class);
 		this.newMethodArgumentsIdentifier = findBean(NewMethodArgumentsIdentifier.class);
-		this.retryListeners = findBeans(RetryListener.class);
 		this.sleeper = findBean(Sleeper.class);
 		Set<Class<? extends Annotation>> retryableAnnotationTypes = new LinkedHashSet<Class<? extends Annotation>>(1);
 		retryableAnnotationTypes.add(Retryable.class);
@@ -115,6 +121,14 @@ public class RetryConfiguration extends AbstractPointcutAdvisor
 		}
 		if (this.enableRetry != null) {
 			setOrder(enableRetry.getNumber("order").intValue());
+		}
+	}
+
+	@Override
+	public void afterSingletonsInstantiated() {
+		this.retryListeners = findBeans(RetryListener.class);
+		if (this.retryListeners != null) {
+			this.advice.setListeners(this.retryListeners);
 		}
 	}
 
@@ -131,10 +145,18 @@ public class RetryConfiguration extends AbstractPointcutAdvisor
 	}
 
 	private <T> T findBean(Class<? extends T> type) {
+		return findBean(type, null, true);
+	}
+
+	private <T> T findBean(Class<? extends T> type, String beanNameQualifier, boolean allowUnique) {
 		if (this.beanFactory instanceof ListableBeanFactory) {
 			ListableBeanFactory listable = (ListableBeanFactory) this.beanFactory;
-			if (listable.getBeanNamesForType(type, false, false).length == 1) {
-				return listable.getBean(type);
+			List<String> beanNames = Arrays.asList(listable.getBeanNamesForType(type, false, false));
+			if (beanNameQualifier != null && beanNames.contains(beanNameQualifier)) {
+				return this.beanFactory.getBean(beanNameQualifier, type);
+			}
+			if (allowUnique && beanNames.size() == 1) {
+				return this.beanFactory.getBean(beanNames.get(0), type);
 			}
 		}
 		return null;
@@ -172,13 +194,13 @@ public class RetryConfiguration extends AbstractPointcutAdvisor
 		return this.pointcut;
 	}
 
-	protected Advice buildAdvice() {
+	protected AnnotationAwareRetryOperationsInterceptor buildAdvice() {
 		AnnotationAwareRetryOperationsInterceptor interceptor = new AnnotationAwareRetryOperationsInterceptor();
 		if (this.retryContextCache != null) {
 			interceptor.setRetryContextCache(this.retryContextCache);
 		}
-		if (this.retryListeners != null) {
-			interceptor.setListeners(this.retryListeners);
+		if (this.circuitBreakerRetryContextCache != null) {
+			interceptor.setCircuitBreakerRetryContextCache(this.circuitBreakerRetryContextCache);
 		}
 		if (this.methodArgumentsKeyGenerator != null) {
 			interceptor.setKeyGenerator(this.methodArgumentsKeyGenerator);

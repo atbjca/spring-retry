@@ -53,6 +53,17 @@ public class EnableRetryWithListenersTests {
 		context.close();
 	}
 
+	@Test
+	public void listenerDependingOnRetryableBean() {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				TestConfigurationWithListenerDependency.class);
+		Service service = context.getBean(Service.class);
+		service.service();
+		assertEquals(3, service.getCount());
+		assertEquals(1, context.getBean(TestConfigurationWithListenerDependency.class).count);
+		context.close();
+	}
+
 	@Configuration
 	@EnableRetry(proxyTargetClass = true)
 	protected static class TestConfiguration {
@@ -108,6 +119,31 @@ public class EnableRetryWithListenersTests {
 				public <T, E extends Throwable> void close(RetryContext context, RetryCallback<T, E> callback,
 						Throwable throwable) {
 					count2++;
+				}
+			};
+		}
+
+	}
+
+	@Configuration
+	@EnableRetry(proxyTargetClass = true)
+	protected static class TestConfigurationWithListenerDependency {
+
+		private int count = 0;
+
+		@Bean
+		public Service service() {
+			return new Service();
+		}
+
+		@Bean
+		public RetryListener listener(final Service service) {
+			return new RetryListenerSupport() {
+				@Override
+				public <T, E extends Throwable> void close(RetryContext context, RetryCallback<T, E> callback,
+						Throwable throwable) {
+					assertEquals(3, service.getCount());
+					count++;
 				}
 			};
 		}

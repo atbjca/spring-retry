@@ -37,6 +37,7 @@ import org.springframework.retry.backoff.BackOffContext;
 import org.springframework.retry.backoff.BackOffInterruptedException;
 import org.springframework.retry.backoff.BackOffPolicy;
 import org.springframework.retry.backoff.NoBackOffPolicy;
+import org.springframework.retry.policy.CircuitBreakerRetryPolicy;
 import org.springframework.retry.policy.MapRetryContextCache;
 import org.springframework.retry.policy.RetryContextCache;
 import org.springframework.retry.policy.SimpleRetryPolicy;
@@ -92,7 +93,7 @@ public class RetryTemplate implements RetryOperations {
 
 	private volatile RetryListener[] listeners = new RetryListener[0];
 
-	private RetryContextCache retryContextCache = new MapRetryContextCache();
+	private CompositeRetryContextCache retryContextCache = new CompositeRetryContextCache();
 
 	private boolean throwLastExceptionOnExhausted;
 
@@ -129,7 +130,16 @@ public class RetryTemplate implements RetryOperations {
 	 * @param retryContextCache the {@link RetryContextCache} to set.
 	 */
 	public void setRetryContextCache(RetryContextCache retryContextCache) {
-		this.retryContextCache = retryContextCache;
+		this.retryContextCache = this.retryContextCache.withStatefulCache(retryContextCache);
+	}
+
+	/**
+	 * 设置断路器使用的独立 {@link RetryContextCache}。
+	 * @param circuitBreakerRetryContextCache 断路器缓存
+	 * @since 1.3.5
+	 */
+	public void setCircuitBreakerRetryContextCache(RetryContextCache circuitBreakerRetryContextCache) {
+		this.retryContextCache = this.retryContextCache.withCircuitBreakerCache(circuitBreakerRetryContextCache);
 	}
 
 	/**
@@ -421,9 +431,7 @@ public class RetryTemplate implements RetryOperations {
 	protected void close(RetryPolicy retryPolicy, RetryContext context, RetryState state, boolean succeeded) {
 		if (state != null) {
 			if (succeeded) {
-				if (!context.hasAttribute(GLOBAL_STATE)) {
-					this.retryContextCache.remove(state.getKey());
-				}
+				this.retryContextCache.remove(state.getKey(), context);
 				retryPolicy.close(context);
 				context.setAttribute(RetryContext.CLOSED, true);
 			}
@@ -443,7 +451,7 @@ public class RetryTemplate implements RetryOperations {
 		if (state != null) {
 			Object key = state.getKey();
 			if (key != null) {
-				if (context.getRetryCount() > 1 && !this.retryContextCache.containsKey(key)) {
+				if (context.getRetryCount() > 1 && !this.retryContextCache.containsKey(key, context)) {
 					throw new RetryException("Inconsistent state for failed item key: cache key has changed. "
 							+ "Consider whether equals() or hashCode() for the key might be inconsistent, "
 							+ "or if you need to supply a better key");
@@ -474,14 +482,14 @@ public class RetryTemplate implements RetryOperations {
 
 		// If there is no cache hit we can avoid the possible expense of the
 		// cache re-hydration.
-		if (!this.retryContextCache.containsKey(key)) {
+		if (!this.retryContextCache.containsKey(key, retryPolicy)) {
 			// The cache is only used if there is a failure.
 			return doOpenInternal(retryPolicy, state);
 		}
 
-		RetryContext context = this.retryContextCache.get(key);
+		RetryContext context = this.retryContextCache.get(key, retryPolicy);
 		if (context == null) {
-			if (this.retryContextCache.containsKey(key)) {
+			if (this.retryContextCache.containsKey(key, retryPolicy)) {
 				throw new RetryException("Inconsistent state for failed item: no history found. "
 						+ "Consider whether equals() or hashCode() for the item might be inconsistent, "
 						+ "or if you need to supply a better ItemKeyGenerator");
@@ -532,8 +540,8 @@ public class RetryTemplate implements RetryOperations {
 	protected <T> T handleRetryExhausted(RecoveryCallback<T> recoveryCallback, RetryContext context, RetryState state)
 			throws Throwable {
 		context.setAttribute(RetryContext.EXHAUSTED, true);
-		if (state != null && !context.hasAttribute(GLOBAL_STATE)) {
-			this.retryContextCache.remove(state.getKey());
+		if (state != null) {
+			this.retryContextCache.remove(state.getKey(), context);
 		}
 		if (recoveryCallback != null) {
 			T recovered = recoveryCallback.recover(context);
@@ -613,6 +621,65 @@ public class RetryTemplate implements RetryOperations {
 		else {
 			throw new RetryException("Exception in retry", throwable);
 		}
+	}
+
+	/**
+	 * 按重试类型隔离普通有状态上下文和全局断路器上下文。
+	 */
+	private static class CompositeRetryContextCache {
+
+		private final RetryContextCache statefulCache;
+
+		private final RetryContextCache circuitBreakerCache;
+
+		CompositeRetryContextCache() {
+			this(new MapRetryContextCache(MapRetryContextCache.DEFAULT_CAPACITY, true),
+					new MapRetryContextCache(MapRetryContextCache.DEFAULT_CAPACITY, false));
+		}
+
+		private CompositeRetryContextCache(RetryContextCache statefulCache, RetryContextCache circuitBreakerCache) {
+			this.statefulCache = statefulCache;
+			this.circuitBreakerCache = circuitBreakerCache;
+		}
+
+		CompositeRetryContextCache withStatefulCache(RetryContextCache statefulCache) {
+			return new CompositeRetryContextCache(statefulCache, this.circuitBreakerCache);
+		}
+
+		CompositeRetryContextCache withCircuitBreakerCache(RetryContextCache circuitBreakerCache) {
+			return new CompositeRetryContextCache(this.statefulCache, circuitBreakerCache);
+		}
+
+		RetryContext get(Object key, RetryPolicy retryPolicy) {
+			return cache(retryPolicy).get(key);
+		}
+
+		void put(Object key, RetryContext context) {
+			cache(context).put(key, context);
+		}
+
+		void remove(Object key, RetryContext context) {
+			if (!context.hasAttribute(GLOBAL_STATE)) {
+				this.statefulCache.remove(key);
+			}
+		}
+
+		boolean containsKey(Object key, RetryPolicy retryPolicy) {
+			return cache(retryPolicy).containsKey(key);
+		}
+
+		boolean containsKey(Object key, RetryContext context) {
+			return cache(context).containsKey(key);
+		}
+
+		private RetryContextCache cache(RetryPolicy retryPolicy) {
+			return retryPolicy instanceof CircuitBreakerRetryPolicy ? this.circuitBreakerCache : this.statefulCache;
+		}
+
+		private RetryContextCache cache(RetryContext context) {
+			return context.hasAttribute(GLOBAL_STATE) ? this.circuitBreakerCache : this.statefulCache;
+		}
+
 	}
 
 }

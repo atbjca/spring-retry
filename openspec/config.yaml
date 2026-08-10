@@ -1,0 +1,34 @@
+schema: spec-driven
+
+context: |
+  项目是 Spring Retry 1.3.x 的 NES 维护分支，构建系统为 Maven，Java package 和公共 API 身份保持 org.springframework.retry.* 与 org.springframework.classify.*。
+  当前 POM 仍声明 org.springframework.retry:spring-retry:1.3.5-SNAPSHOT、Java 1.6 和 Spring Framework 4.3.29.RELEASE；这些是待后续 change 修改的当前事实，不代表维护目标已经实现。
+  目标支持范围为 Java 8 和 Spring Framework 5.3.x，不承诺 Java 6/7 或 Spring Framework 4.x。
+  目标 SNAPSHOT GAV 为 cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1-SNAPSHOT。
+  目标 RELEASE GAV 为 cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1。
+  默认发布元数据最终必须使用 cn.bjca.footstone.bpring 下的 NES Spring Framework 5.3.39-nes.patch.1 制品，官方 Spring 5.3.39 只能用于隔离兼容性验证。
+  CVE 主状态仅允许 已修复、免疫、不适用、修复中、已缓解、暂缓。
+  所有永久文档以中文为主，GAV、类名、命令、协议名和专业术语可保留英文，禁止写入凭证或私服敏感配置值。
+
+rules:
+  proposal:
+    - 每项源码、测试、构建、依赖、GAV、文档、发布或需求变更都必须建立独立且完整的 OpenSpec change
+    - 必须区分当前状态、目标状态和已发布状态，不得把计划坐标或未验证源码描述为已可用或已修复
+    - 必须列出明确的范围外事项、受影响模块、上下游和潜在风险
+  design:
+    - 必须包含 Impact Analysis，覆盖上游、下游、模块、公共 API、构建元数据、运行行为、数据安全、兼容性和回滚
+    - 三个及以上组件、分支或步骤存在依赖时必须提供流程图、架构图或等价可视化
+    - 必须前置分析资源耗尽、注入、越权、路径处理、反序列化和依赖供应链风险
+    - 未经用户明确批准不得引入新的运行时第三方库、框架或设计模式
+    - 纯文档或声明式配置变更必须说明覆盖率不适用及替代静态验证方式
+  specs:
+    - Requirement 必须使用 MUST、MUST NOT、SHALL 等明确规范词，并至少包含一个 WHEN 和 THEN 场景
+    - CVE 状态和证据条件必须遵循六状态词典，版本字符串或 GAV 不得单独作为安全结论
+    - Java 兼容性规格必须维持 Java 8、Spring Framework 5.3.x 和现有 package/import 合同
+  tasks:
+    - 所有任务必须使用 - [ ] X.Y 格式，按依赖顺序排列且可独立验收
+    - Java 生产代码任务必须依次列出 RED 失败测试、GREEN 最小实现和 REFACTOR 全量验证，并记录命令结果
+    - 新增核心逻辑或复杂算法必须包含可重复的覆盖率任务且达到至少 60%，豁免必须明确说明
+    - Java 源码、POM、依赖、发布、跨仓库或破坏性任务开始前必须列出明确人工审批点和 Git 分支安全检查
+    - 完成前必须同步 README、永久文档、CVE 总览与单篇文档，并执行 OpenSpec 严格校验和 Git diff 范围复核
+    - 任一任务、测试、覆盖率、制品或文档证据未完成时禁止归档

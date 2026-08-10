@@ -66,7 +66,10 @@ public class RetryTemplateBuilderTests {
 		assertDefaultClassifier(policyTuple);
 
 		Assert.assertFalse(getPropertyValue(template, "throwLastExceptionOnExhausted", Boolean.class));
-		Assert.assertTrue(getPropertyValue(template, "retryContextCache") instanceof MapRetryContextCache);
+		Assert.assertTrue(
+				getPropertyValue(template, "retryContextCache.statefulCache") instanceof MapRetryContextCache);
+		Assert.assertTrue(
+				getPropertyValue(template, "retryContextCache.circuitBreakerCache") instanceof MapRetryContextCache);
 		Assert.assertEquals(0, getPropertyValue(template, "listeners", RetryListener[].class).length);
 
 		Assert.assertTrue(getPropertyValue(template, "backOffPolicy") instanceof NoBackOffPolicy);

@@ -71,7 +71,8 @@ public class CircuitBreakerStatisticsTests {
 		};
 		this.retryTemplate = new RetryTemplate();
 		this.cache = new MapRetryContextCache();
-		this.retryTemplate.setRetryContextCache(this.cache);
+		// 断路器状态使用独立缓存，测试需显式注入并从同一缓存读取状态。
+		this.retryTemplate.setCircuitBreakerRetryContextCache(this.cache);
 		retryTemplate.setListeners(new RetryListener[] { listener });
 		this.callback.setAttemptsBeforeSuccess(1);
 		// No rollback by default (so exceptions are not rethrown)

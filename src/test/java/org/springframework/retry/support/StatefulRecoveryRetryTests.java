@@ -231,7 +231,8 @@ public class StatefulRecoveryRetryTests {
 	public void testCacheCapacity() throws Throwable {
 
 		this.retryTemplate.setRetryPolicy(new SimpleRetryPolicy(1));
-		this.retryTemplate.setRetryContextCache(new MapRetryContextCache(1));
+		// 此用例验证满载 fail-fast，显式关闭默认的 LRU 淘汰行为。
+		this.retryTemplate.setRetryContextCache(new MapRetryContextCache(1, false));
 
 		RetryCallback<Object, Exception> callback = new RetryCallback<Object, Exception>() {
 			@Override

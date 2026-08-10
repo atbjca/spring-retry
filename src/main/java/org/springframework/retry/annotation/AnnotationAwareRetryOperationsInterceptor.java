@@ -92,6 +92,9 @@ public class AnnotationAwareRetryOperationsInterceptor implements IntroductionIn
 
 	private RetryContextCache retryContextCache = new MapRetryContextCache();
 
+	private RetryContextCache circuitBreakerRetryContextCache = new MapRetryContextCache(
+			MapRetryContextCache.DEFAULT_CAPACITY, false);
+
 	private MethodArgumentsKeyGenerator methodArgumentsKeyGenerator;
 
 	private NewMethodArgumentsIdentifier newMethodArgumentsIdentifier;
@@ -115,6 +118,15 @@ public class AnnotationAwareRetryOperationsInterceptor implements IntroductionIn
 	 */
 	public void setRetryContextCache(RetryContextCache retryContextCache) {
 		this.retryContextCache = retryContextCache;
+	}
+
+	/**
+	 * 设置断路器使用的独立 {@link RetryContextCache}。
+	 * @param circuitBreakerRetryContextCache 断路器缓存
+	 * @since 1.3.5
+	 */
+	public void setCircuitBreakerRetryContextCache(RetryContextCache circuitBreakerRetryContextCache) {
+		this.circuitBreakerRetryContextCache = circuitBreakerRetryContextCache;
 	}
 
 	/**
@@ -234,6 +246,7 @@ public class AnnotationAwareRetryOperationsInterceptor implements IntroductionIn
 	private MethodInterceptor getStatefulInterceptor(Object target, Method method, Retryable retryable) {
 		RetryTemplate template = createTemplate(retryable.listeners());
 		template.setRetryContextCache(this.retryContextCache);
+		template.setCircuitBreakerRetryContextCache(this.circuitBreakerRetryContextCache);
 
 		CircuitBreaker circuit = AnnotatedElementUtils.findMergedAnnotation(method, CircuitBreaker.class);
 		if (circuit == null) {

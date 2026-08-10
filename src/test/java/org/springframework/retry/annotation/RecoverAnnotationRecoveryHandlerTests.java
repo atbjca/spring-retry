@@ -242,7 +242,7 @@ public class RecoverAnnotationRecoveryHandlerTests {
 		Method foo = ReflectionUtils.findMethod(MultipleQualifyingRecoversNoThrowable.class, "foo", String.class);
 		RecoverAnnotationRecoveryHandler<?> handler = new RecoverAnnotationRecoveryHandler<Integer>(
 				new MultipleQualifyingRecoversNoThrowable(), foo);
-		assertEquals(1, handler.recover(new Object[] { null }, new RuntimeException("Planned")));
+		assertEquals(1, handler.recover(new Object[] { "Randell" }, new RuntimeException("Planned")));
 
 	}
 

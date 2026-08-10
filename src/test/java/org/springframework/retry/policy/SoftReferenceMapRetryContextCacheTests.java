@@ -18,10 +18,17 @@ package org.springframework.retry.policy;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.lang.ref.SoftReference;
+import java.util.Map;
 
 import org.junit.Test;
+
 import org.springframework.retry.context.RetryContextSupport;
+import org.springframework.test.util.ReflectionTestUtils;
 
 public class SoftReferenceMapRetryContextCacheTests {
 
@@ -34,12 +41,61 @@ public class SoftReferenceMapRetryContextCacheTests {
 		assertEquals(context, cache.get("foo"));
 	}
 
-	@Test(expected = RetryCacheCapacityExceededException.class)
-	public void testPutOverLimit() {
-		RetryContextSupport context = new RetryContextSupport(null);
+	@Test
+	public void testPutExistingKeyAtCapacity() {
+		RetryContextSupport first = new RetryContextSupport(null);
+		RetryContextSupport replacement = new RetryContextSupport(null);
 		cache.setCapacity(1);
+		cache.put("foo", first);
+		cache.put("foo", replacement);
+		assertSame(replacement, cache.get("foo"));
+	}
+
+	@Test
+	public void testLeastRecentlyUsedEntryIsEvicted() {
+		SoftReferenceMapRetryContextCache cache = new SoftReferenceMapRetryContextCache(2);
+		RetryContextSupport first = new RetryContextSupport(null);
+		RetryContextSupport second = new RetryContextSupport(null);
+		RetryContextSupport third = new RetryContextSupport(null);
+		cache.put("first", first);
+		cache.put("second", second);
+
+		cache.get("first");
+		cache.put("third", third);
+
+		assertTrue(cache.containsKey("first"));
+		assertFalse(cache.containsKey("second"));
+		assertTrue(cache.containsKey("third"));
+	}
+
+	@Test
+	public void testStrictCapacityRejectsOnlyNewKeys() {
+		SoftReferenceMapRetryContextCache cache = strictCache(1);
+		RetryContextSupport first = new RetryContextSupport(null);
+		RetryContextSupport replacement = new RetryContextSupport(null);
+		cache.put("first", first);
+		cache.put("first", replacement);
+
+		try {
+			cache.put("second", new RetryContextSupport(null));
+			fail("Expected RetryCacheCapacityExceededException");
+		}
+		catch (RetryCacheCapacityExceededException ex) {
+			assertSame(replacement, cache.get("first"));
+			assertFalse(cache.containsKey("second"));
+		}
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
+	public void testCollectedReferenceIsRemovedFromTheCache() {
+		RetryContextSupport context = new RetryContextSupport(null);
 		cache.put("foo", context);
-		cache.put("foo", context);
+		Map<Object, SoftReference<org.springframework.retry.RetryContext>> map = (Map<Object, SoftReference<org.springframework.retry.RetryContext>>) ReflectionTestUtils
+				.getField(cache, "map");
+		map.get("foo").clear();
+
+		assertFalse(cache.containsKey("foo"));
 	}
 
 	@Test
@@ -50,6 +106,17 @@ public class SoftReferenceMapRetryContextCacheTests {
 		assertTrue(cache.containsKey("foo"));
 		cache.remove("foo");
 		assertFalse(cache.containsKey("foo"));
+	}
+
+	private SoftReferenceMapRetryContextCache strictCache(int capacity) {
+		try {
+			return SoftReferenceMapRetryContextCache.class.getConstructor(Integer.TYPE, Boolean.TYPE)
+					.newInstance(capacity, false);
+		}
+		catch (Exception ex) {
+			throw new AssertionError("SoftReferenceMapRetryContextCache must expose the strict-capacity constructor",
+					ex);
+		}
 	}
 
 }

@@ -15,10 +15,6 @@
  */
 package org.springframework.retry.policy;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.springframework.retry.RetryContext;
 
 /**
@@ -27,18 +23,7 @@ import org.springframework.retry.RetryContext;
  *
  * @author Dave Syer
  */
-public class MapRetryContextCache implements RetryContextCache {
-
-	/**
-	 * Default value for maximum capacity of the cache. This is set to a reasonably low
-	 * value (4096) to avoid users inadvertently filling the cache with item keys that are
-	 * inconsistent.
-	 */
-	public static final int DEFAULT_CAPACITY = 4096;
-
-	private Map<Object, RetryContext> map = Collections.synchronizedMap(new HashMap<Object, RetryContext>());
-
-	private int capacity;
+public class MapRetryContextCache extends AbstractMapRetryContextCache<RetryContext> {
 
 	/**
 	 * Create a {@link MapRetryContextCache} with default capacity.
@@ -48,11 +33,21 @@ public class MapRetryContextCache implements RetryContextCache {
 	}
 
 	/**
-	 * @param defaultCapacity the default capacity
+	 * 使用指定容量创建缓存；满载时淘汰最久未访问的条目。
+	 * @param capacity 缓存容量
 	 */
-	public MapRetryContextCache(int defaultCapacity) {
-		super();
-		this.capacity = defaultCapacity;
+	public MapRetryContextCache(int capacity) {
+		this(capacity, true);
+	}
+
+	/**
+	 * 使用指定容量和满载策略创建缓存。
+	 * @param capacity 缓存容量
+	 * @param removeEldestEntries 满载时是否淘汰最久未访问的条目
+	 * @since 1.3.5
+	 */
+	public MapRetryContextCache(int capacity, boolean removeEldestEntries) {
+		super(capacity, removeEldestEntries);
 	}
 
 	/**
@@ -63,28 +58,17 @@ public class MapRetryContextCache implements RetryContextCache {
 	 * @param capacity the capacity to set
 	 */
 	public void setCapacity(int capacity) {
-		this.capacity = capacity;
+		super.setCapacity(capacity);
 	}
 
-	public boolean containsKey(Object key) {
-		return map.containsKey(key);
+	@Override
+	protected RetryContext toValue(RetryContext context) {
+		return context;
 	}
 
-	public RetryContext get(Object key) {
-		return map.get(key);
-	}
-
-	public void put(Object key, RetryContext context) {
-		if (map.size() >= capacity) {
-			throw new RetryCacheCapacityExceededException("Retry cache capacity limit breached. "
-					+ "Do you need to re-consider the implementation of the key generator, "
-					+ "or the equals and hashCode of the items that failed?");
-		}
-		map.put(key, context);
-	}
-
-	public void remove(Object key) {
-		map.remove(key);
+	@Override
+	protected RetryContext fromValue(RetryContext value) {
+		return value;
 	}
 
 }
