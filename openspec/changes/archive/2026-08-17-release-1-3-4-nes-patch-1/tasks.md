@@ -66,9 +66,9 @@
 ## 8. Documentation, reconciliation, and archive
 
 - [x] 8.1 Verify component documentation accurately describes the published RELEASE and does not claim excluded artifacts were published.
-- [ ] 8.2 Update the central manifest with final state, release commit, tag object/target, Nexus URLs, checksums, evidence paths, exclusions, and verification timestamps.
-- [ ] 8.3 Reconcile the manifest against component Git, active OpenSpec, remote tag, and Nexus; resolve every mismatch.
-- [ ] 8.4 Update the human-readable run report and central project documentation only after artifact and tag verification.
-- [ ] 8.5 Release the owner lease after all component writes and evidence updates finish.
-- [ ] 8.6 Validate this component change and archive it only after state reaches `documented` with complete Git/Nexus/manifest evidence.
-- [ ] 8.7 Record the OpenSpec archive path and final `archived` state in the release manifest.
+- [x] 8.2 Update the central manifest with final state, release commit, tag object/target, Nexus URLs, checksums, evidence paths, exclusions, and verification timestamps.
+- [x] 8.3 Reconcile the manifest against component Git, active OpenSpec, remote tag, and Nexus; resolve every mismatch.
+- [x] 8.4 Update the human-readable run report and central project documentation only after artifact and tag verification.
+- [x] 8.5 Release the owner lease after all component writes and evidence updates finish.
+- [x] 8.6 Validate this component change and archive it only after state reaches `documented` with complete Git/Nexus/manifest evidence.
+- [x] 8.7 Record the OpenSpec archive path and final `archived` state in the release manifest.
