@@ -2,7 +2,7 @@
 
 ## 1. 当前验证结论
 
-当前 `1.3.4-nes.patch.1-SNAPSHOT` 已在真实 JDK 8 上完成：
+`1.3.4-nes.patch.1` RELEASE 候选复用以下已经在真实 JDK 8 上完成的开发验证：
 
 - listener 生命周期与 CVE-2026-41710 严格 TDD：有效 RED、最小 GREEN 和全量回归；
 - 官方 Spring Framework 5.3.39 隔离 `clean verify`；
@@ -13,7 +13,7 @@
 - Maven 与 Gradle 7.6.3 消费者 smoke test。
 - 当前 SNAPSHOT 的完整 `make clean deploy`、Nexus 隔离重新下载、摘要/API/依赖树和 JDK 8 远端消费者 smoke test。
 
-这些结果证明 CVE 攻击路径已在源码与 Nexus SNAPSHOT 中消除，但尚未完成 RELEASE 远端闭环，因此 SNAPSHOT 不是生产安全 RELEASE。
+这些结果证明 CVE 攻击路径已在源码与已验证的开发制品中消除。版本冻结没有修改生产源码、测试或构建逻辑，因此宽泛测试可复用；RELEASE 本地安装、元数据扫描、消费者和远端闭环仍须单独记录。
 
 ## 2. 工具链
 
@@ -188,7 +188,7 @@ mvn dependency:list -DincludeScope=runtime -DoutputFile=target/dependency-list-r
 
 结果：
 
-- 项目 GAV 为 `cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1-SNAPSHOT`；
+- 开发验证时项目 GAV 为 `cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1-SNAPSHOT`；当前 RELEASE 候选为同坐标的 `1.3.4-nes.patch.1`；
 - Framework BOM、context、aop、beans、core、expression、jcl、test、tx 全部为 NES `5.3.39-nes.patch.1`；
 - 默认依赖树不含 `org.springframework:spring-*`；
 - 官方依赖树全部为 `org.springframework:spring-*:5.3.39`，不含 NES Framework；
@@ -197,13 +197,13 @@ mvn dependency:list -DincludeScope=runtime -DoutputFile=target/dependency-list-r
 
 ## 9. 制品与字节码
 
-默认构建和本地 install 均生成：
+RELEASE 候选 `make install-local` 应生成：
 
 ```text
-bjca-footstone-bpring-retry-1.3.4-nes.patch.1-SNAPSHOT.jar
-bjca-footstone-bpring-retry-1.3.4-nes.patch.1-SNAPSHOT.pom
-bjca-footstone-bpring-retry-1.3.4-nes.patch.1-SNAPSHOT-sources.jar
-bjca-footstone-bpring-retry-1.3.4-nes.patch.1-SNAPSHOT-javadoc.jar
+bjca-footstone-bpring-retry-1.3.4-nes.patch.1.jar
+bjca-footstone-bpring-retry-1.3.4-nes.patch.1.pom
+bjca-footstone-bpring-retry-1.3.4-nes.patch.1-sources.jar
+bjca-footstone-bpring-retry-1.3.4-nes.patch.1-javadoc.jar
 ```
 
 `javap -verbose` 检查新增/修改代表类：
@@ -293,13 +293,13 @@ Maven 默认 `target/` 会被后续 `clean` 覆盖，因此本次矩阵证据同
 
 ## 13. 最终验收命令
 
-文档同步后至少重新执行：
+RELEASE change 的最小重新验证为：
 
 ```bash
-make verify
-make validate OPEN_SPEC_CHANGE=remediate-cve-2026-41710-stateful-cache-exhaustion
+make install-local
+make validate OPEN_SPEC_CHANGE=release-1-3-4-nes-patch-1
 ```
 
-验收同时检查 `make help`、所有 target dry-run、SNAPSHOT gate、RELEASE 默认拒绝、`ALLOW_RELEASE_DEPLOY=true` 显式确认以及凭证静态扫描。`make validate` 会运行可选 active change strict、全项目 strict 和 `git diff --check`。门禁测试不得实际执行 RELEASE deploy。
+本次已完成：`make install-local` 成功，生成 POM 扫描 `clean=true` 且无内部 SNAPSHOT，代表性 Maven/JDK 8 consumer 1/1 通过。`make validate` 会运行 active change strict、全项目 strict 和 `git diff --check`。宽泛 `make verify`/`make test` 只在源码、测试或构建逻辑变化使开发证据失效时重跑；门禁测试不得实际执行 RELEASE deploy。
 
 任何测试、覆盖率、坐标排他、制品、消费者、文档或 OpenSpec 证据失败时，change 保持 active。

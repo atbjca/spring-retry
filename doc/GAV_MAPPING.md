@@ -1,13 +1,14 @@
 # Spring Retry NES GAV 映射
 
-> 状态：开发 SNAPSHOT GAV 已写入 POM，并完成本地构建、安装与 Maven/Gradle 消费验证；正式 RELEASE 尚未发布。
+> 状态：POM 已冻结为 `1.3.4-nes.patch.1` RELEASE 候选；NES Spring Framework `5.3.39-nes.patch.1` 上游已在 Nexus RELEASE 验证，当前组件尚未部署。
+
+目标仓库：`http://192.168.131.36:8088/repository/releases/`。
 
 ## 1. 项目坐标
 
 | 用途 | GroupId | ArtifactId | Version | 当前可用性 |
 | --- | --- | --- | --- | --- |
-| 当前开发版本 | `cn.bjca.footstone.bpring.retry` | `bjca-footstone-bpring-retry` | `1.3.4-nes.patch.1-SNAPSHOT` | CVE 源码修复已在本地构建、安装和消费者中验证；尚未完成 RELEASE/Nexus |
-| 计划正式版本 | `cn.bjca.footstone.bpring.retry` | `bjca-footstone-bpring-retry` | `1.3.4-nes.patch.1` | 尚未发布；不得作为当前生产坐标使用 |
+| RELEASE 候选 | `cn.bjca.footstone.bpring.retry` | `bjca-footstone-bpring-retry` | `1.3.4-nes.patch.1` | 本地 install、POM 扫描和 consumer 已通过；Nexus RELEASE 验证完成前不得作为已发布坐标使用 |
 | 原官方坐标 | `org.springframework.retry` | `spring-retry` | 1.3.x | 仅用于识别上游来源和消费者排除，不再是本 fork 的项目 GAV |
 
 项目为单模块，不创建独立 Retry BOM。

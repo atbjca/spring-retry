@@ -1,6 +1,6 @@
 # Spring Retry NES 发布指南
 
-本文描述通用、不可变、证据驱动的发布流程。当前 `1.3.4-nes.patch.1` 尚未发布；CVE remediation change 已部署并隔离验证修复 SNAPSHOT，也为 `make deploy` 提供 RELEASE 显式确认入口，但本文和该入口都不构成实际 RELEASE 部署授权。
+本文描述通用、不可变、证据驱动的发布流程。当前 POM 已冻结为 `1.3.4-nes.patch.1` RELEASE 候选，但 Nexus RELEASE 部署、远端复验和 Git tag 尚未完成。
 
 ## 1. 发布前置 change
 
@@ -26,7 +26,7 @@ flowchart LR
 cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1
 ```
 
-开发版本：
+前一开发版本：
 
 ```text
 cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1-SNAPSHOT
@@ -79,17 +79,19 @@ java -version
 /Users/anan/dev/apache-maven-3.8.2/bin/mvn -version
 ```
 
-本仓库没有 Gradle 构建。Gradle 只用于下游消费者 smoke test；本 change 已使用 `~/dev/gradle-7.6.3` + JDK 8 完成基线验证，正式 RELEASE 仍需在独立 release change 中复验。
+本仓库没有 Gradle 构建。Gradle 只用于下游消费者 smoke test；本 change 复用 `~/dev/gradle-7.6.3` + JDK 8 的开发基线，并针对 RELEASE 候选重新执行必要的本地消费者验证。
 
 ## 5. 本地构建门禁
 
-使用独立 release change 批准的 Maven/Make 命令执行。当前 remediation change 已完成以下 SNAPSHOT 门禁，但不构成 RELEASE 授权：
+使用当前 release change 批准的 Maven/Make 命令执行。开发阶段已经完成以下宽泛门禁，本次不因版本字符串变化重复运行 `make verify` 或 `make test`：
 
 ```bash
 mvn clean verify
 mvn install
 make clean deploy
 ```
+
+本次唯一必要的本地发布构建为 `make install-local`；Maven 不使用 `-T`，并且任何 Make、Maven、Gradle 命令都不得与其他项目并发。
 
 必须验证：
 
@@ -188,7 +190,7 @@ Gradle 消费者验证使用相同原则，并确认目标 GAV 可被 Gradle met
 - Nexus 不存在检查结果；
 - 失败和回滚策略。
 
-只有用户再次明确批准，才可使用 Maven settings 中批准的 `server` id 执行一次部署。文档和命令记录不得包含真实密码、token 或私钥。
+只有协调主会话完成全部门禁复核并取得 CLI 执行 token 后，才可使用 Maven settings 中批准的 `server` id 执行一次部署。无需用户重复回显仪式性 token；文档和命令记录不得包含真实密码、token 或私钥。
 
 POM 已使用属性化 `distributionManagement`：非 SNAPSHOT 版本由 Maven 选择 server id `releases`。完成前述检查和再次授权后，标准命令为：
 

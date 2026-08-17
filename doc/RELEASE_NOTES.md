@@ -1,33 +1,27 @@
 # Spring Retry NES 发布说明
 
-## 1.3.4-nes.patch.1（未发布）
+## 1.3.4-nes.patch.1（RELEASE 候选）
 
-> 状态：未发布，Nexus SNAPSHOT 已验证
+> 状态：RELEASE 版本已冻结，尚未部署到 Nexus RELEASE
 >
-> 最后更新：2026-08-10
+> 最后更新：2026-08-17
 >
 > Release commit：尚未创建
 >
 > Git tag：尚未创建
-> Nexus：SNAPSHOT 已部署并隔离验证；RELEASE 尚未部署
+> Nexus：Framework 上游 RELEASE 已验证；Retry 目标为 `http://192.168.131.36:8088/repository/releases/`，尚未部署
 
 ### 坐标
 
-计划正式坐标：
+RELEASE 候选坐标：
 
 ```text
 cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1
 ```
 
-当前开发坐标：
+此前 SNAPSHOT 已通过本地 Maven install、Nexus deploy、隔离四件套和 JDK 8 远端消费者验证，并包含已验证的 CVE-2026-41710 源码修复。当前 POM 已切换为 RELEASE 候选；仍须重新完成 RELEASE 本地安装、POM 扫描、消费者、单次部署和远端闭环。
 
-```text
-cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1-SNAPSHOT
-```
-
-当前 SNAPSHOT 已通过本地 Maven install、Nexus deploy、隔离四件套和 JDK 8 远端消费者验证，并包含已验证的 CVE-2026-41710 源码修复；它尚未完成 RELEASE 远端闭环，不得作为生产安全版本。
-
-### 当前 SNAPSHOT 已完成
+### 已复用的开发验证
 
 - 项目 GAV 切换为 BJCA NES SNAPSHOT，保留 `org.springframework.retry.*` 与 `org.springframework.classify.*` package/import；
 - 编译与运行最低基线切换为真实 Java 8，代表性 class file major version 为 52；
@@ -61,10 +55,10 @@ cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1-SNA
 
 listener 生命周期修复、GAV 重品牌、JaCoCo 或全量测试通过不能改变该状态。
 
-### 当前发布阻断项
+### 当前剩余发布门禁
 
-- RELEASE 版本切换、无 SNAPSHOT 依赖复核和 release commit 尚未执行；
-- Nexus RELEASE 目标不存在检查、单独部署授权、远端重新下载和远端消费者验证尚不存在；
+- RELEASE 本地安装、生成 POM 的内部 SNAPSHOT 扫描和 RELEASE 候选消费者已通过，证据见 OpenSpec `evidence/local-verification.md`；
+- release commit、Nexus RELEASE 目标不存在检查、单次部署、远端重新下载和远端消费者验证尚未完成；
 - Git annotated tag 尚未创建。
 
 ### 消费者迁移准备
