@@ -1,6 +1,6 @@
 # Spring Retry NES GAV 映射
 
-> 状态：POM 已冻结为 `1.3.4-nes.patch.1` RELEASE 候选；NES Spring Framework `5.3.39-nes.patch.1` 上游已在 Nexus RELEASE 验证，当前组件尚未部署。
+> 状态：`1.3.4-nes.patch.1` 已发布并完成 Nexus RELEASE、RELEASE-only consumer 和 Git tag 验证；上游 NES Spring Framework 为 `5.3.39-nes.patch.1`。
 
 目标仓库：`http://192.168.131.36:8088/repository/releases/`。
 
@@ -8,7 +8,7 @@
 
 | 用途 | GroupId | ArtifactId | Version | 当前可用性 |
 | --- | --- | --- | --- | --- |
-| RELEASE 候选 | `cn.bjca.footstone.bpring.retry` | `bjca-footstone-bpring-retry` | `1.3.4-nes.patch.1` | 本地 install、POM 扫描和 consumer 已通过；Nexus RELEASE 验证完成前不得作为已发布坐标使用 |
+| 已发布 RELEASE | `cn.bjca.footstone.bpring.retry` | `bjca-footstone-bpring-retry` | `1.3.4-nes.patch.1` | Nexus 四件套和隔离 consumer 已验证，可供批准的生产消费者采用 |
 | 原官方坐标 | `org.springframework.retry` | `spring-retry` | 1.3.x | 仅用于识别上游来源和消费者排除，不再是本 fork 的项目 GAV |
 
 项目为单模块，不创建独立 Retry BOM。

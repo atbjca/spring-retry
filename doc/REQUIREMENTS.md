@@ -7,14 +7,14 @@
 | 项目 | 当前已验证事实 | 后续目标 |
 | --- | --- | --- |
 | 分支 | `1.3.x-bjca-patch` | 继续维护该 1.3.x fork |
-| 开发 GAV | `cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1-SNAPSHOT` | 保持为开发身份，禁止冒充 RELEASE |
-| RELEASE GAV | 尚未发布 | `cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1` |
+| 当前 RELEASE GAV | `cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1` | 已完成 Nexus、消费者和 Git tag 验证 |
+| 下一开发 GAV | 尚未设置 | 后续开发必须使用新的 `-SNAPSHOT` 版本，不得改写已发布 RELEASE |
 | Java | POM、真实构建和字节码均为 Java 8 | 继续以真实 JDK 8 作为发布门禁 |
 | Spring Framework | 默认 NES `5.3.39-nes.patch.1`；官方 5.3.39 隔离验证全绿 | 仅承诺 Spring Framework 5.3.x |
 | 构建系统 | Maven + 根 Makefile 入口 | Makefile 封装 Maven/OpenSpec 和受控 deploy；不为本仓库新增 Gradle 构建或 Git 发布 target |
 | Java package | `org.springframework.retry.*`、`org.springframework.classify.*` | 保持不变 |
 
-当前 SNAPSHOT 已完成 CVE-2026-41710 的源码、测试、覆盖率、Nexus 四件套和远端消费者验证；主状态仍为“修复中（源码与 Nexus SNAPSHOT 已验证，待 RELEASE）”。正式支持状态只有在对应 OpenSpec change 完成、验证和归档后才生效，版本字符串、计划 GAV 或文档声明不能替代证据。
+`1.3.4-nes.patch.1` 已完成 CVE-2026-41710 的源码、测试、覆盖率、Nexus 四件套、隔离消费者和远端 Git tag 验证，主状态为“已修复”。正式支持状态以对应 OpenSpec、远端制品和 Git 证据为准，版本字符串或文档声明不能替代证据。
 
 本维护线的缓存安全合同为：普通 map/soft-reference cache 默认使用有界访问顺序 LRU，显式 `(capacity, false)` 保留严格 fail-fast；普通有状态重试与断路器使用独立 cache，注解配置使用 `retryContextCache` 与 `circuitBreakerRetryContextCache` 两个约定名称。后续变化必须重新执行完整 OpenSpec、TDD、影响分析和文档同步。
 

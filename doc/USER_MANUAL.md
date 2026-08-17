@@ -2,13 +2,13 @@
 
 ## 1. 文档状态
 
-本手册覆盖当前已验证 SNAPSHOT 行为和仍待完成的 RELEASE 闭环。为避免误用：
+本手册覆盖 `1.3.4-nes.patch.1` 已发布 RELEASE 的验证行为。为避免误用：
 
-- **当前行为**：已由当前源码、POM、JDK 8 双矩阵和 Nexus SNAPSHOT 制品验证；
+- **当前行为**：已由 release commit、POM、JDK 8 验证和 Nexus RELEASE 制品验证；
 - **本地已验证行为**：CVE 源码修复已通过测试、覆盖率、制品和消费者验证；
-- **已发布行为**：只有 Nexus RELEASE 远端复验后才能标记。
+- **已发布行为**：Nexus 四件套、隔离消费者、release commit 和 annotated tag 已完成远端复验。
 
-NES SNAPSHOT 已完成本地 Maven repository、Nexus 部署和隔离远端验证。CVE-2026-41710 主状态仍为“修复中”，阶段为“源码与 Nexus SNAPSHOT 已验证，待 RELEASE”。
+`1.3.4-nes.patch.1` 已完成 Nexus RELEASE 和 Git 闭环。CVE-2026-41710 主状态为“已修复”；下游仍需升级到该 RELEASE 并验证业务缓存语义。
 
 ## 2. 核心模型
 
@@ -33,8 +33,8 @@ flowchart LR
 
 | 阶段 | GAV | 可用性 |
 | --- | --- | --- |
-| 当前 POM / SNAPSHOT | `cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1-SNAPSHOT` | 已完成 CVE 源码修复、本地构建、Nexus 隔离验证和消费者验证；不可替代 RELEASE |
-| 计划 RELEASE | `cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1` | 待 release change 与 Nexus 远端验证 |
+| 当前 RELEASE | `cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1` | Nexus 四件套、无 SNAPSHOT POM、隔离 JDK 8 consumer 和远端 Git tag 已验证 |
+| 下一开发版本 | 尚未设置 | 后续开发使用新的 `-SNAPSHOT` 版本，不得覆盖该 RELEASE |
 
 GAV 变化不改变 Java import。代码继续使用：
 
@@ -213,7 +213,7 @@ public RetryContextCache circuitBreakerRetryContextCache() {
 3. 容器中只有一个其他名称的 cache Bean 时，仅回退给普通重试；
 4. 存在多个未命名且没有约定名称的 cache Bean 时，不按注册顺序猜测，使用各自安全默认值。
 
-旧应用如果曾依赖唯一 cache Bean 同时控制两类状态，升级时必须改为两个命名 Bean。回滚到旧实现会重新暴露 CVE 攻击路径；未发布阶段可回退本 change，正式发布后只能通过新的 NES patch 修订处理回归。
+旧应用如果曾依赖唯一 cache Bean 同时控制两类状态，升级时必须改为两个命名 Bean。回滚到旧实现会重新暴露 CVE 攻击路径；该版本已正式发布，回归只能通过新的 NES patch 修订处理，不能覆盖既有 RELEASE。
 
 ## 8. 断路器
 
@@ -292,13 +292,13 @@ public class AuditRetryListener implements RetryListener {
 1. 在消费者仓库创建独立 OpenSpec；
 2. 找出官方 Spring Retry 的直接和传递路径；
 3. 排除 `org.springframework.retry:spring-retry`；
-4. 联调阶段添加已验证的 NES Retry SNAPSHOT；生产升级等待 RELEASE；
+4. 添加已验证的 NES Retry RELEASE `1.3.4-nes.patch.1`；
 5. 确保 Spring Framework 全部为同一套 NES 坐标；
 6. 验证 Java import 无需变化；
 7. 运行 Maven/Gradle dependency tree 和业务 smoke test；
 8. 同步消费者的 GAV、Quick Start、漏洞报告和 Release Notes。
 
-SNAPSHOT 的 Maven/Gradle 示例、受控 deploy 入口和官方 Framework 三属性隔离命令见 [快速入门](QUICK_START.md)。
+RELEASE 的 Maven/Gradle 示例、受控 deploy 入口和官方 Framework 三属性隔离命令见 [快速入门](QUICK_START.md)。
 
 详细映射见 [GAV 映射](GAV_MAPPING.md)。
 
@@ -310,8 +310,8 @@ SNAPSHOT 的 Maven/Gradle 示例、受控 deploy 入口和官方 Framework 三�
 - 为缓存容量、驱逐、异常和断路器状态建立指标与告警；
 - listener 日志必须限流和脱敏；
 - 不把“业务暂未使用”直接解释为组件“免疫”；
-- 不把版本号、GAV 或 SNAPSHOT 名称直接解释为“已修复”；
-- 生产使用必须等待目标 RELEASE 完成远端制品验证。
+- 不把版本号或 GAV 单独解释为“已修复”，必须同时核对远端制品和验证证据；
+- 生产使用 `1.3.4-nes.patch.1` 前仍需完成消费者自身的依赖树和业务 smoke test。
 
 ## 13. 相关文档
 

@@ -1,25 +1,26 @@
 # Spring Retry NES 发布说明
 
-## 1.3.4-nes.patch.1（RELEASE 候选）
+## 1.3.4-nes.patch.1（已发布）
 
-> 状态：RELEASE 版本已冻结，尚未部署到 Nexus RELEASE
+> 状态：Nexus 与 Git 已验证
 >
 > 最后更新：2026-08-17
 >
-> Release commit：尚未创建
+> Release commit：`1f6dc7a9a02a1b19662c4f1a099fd7dd4069c291`
 >
-> Git tag：尚未创建
-> Nexus：Framework 上游 RELEASE 已验证；Retry 目标为 `http://192.168.131.36:8088/repository/releases/`，尚未部署
+> Git tag：`v1.3.4-nes.patch.1`，annotated tag object `d96b2fa6a19b0c0642d45141eb2ffdcb01663d0f`
+>
+> Nexus：`http://192.168.131.36:8088/repository/releases/`，四件套已验证
 
 ### 坐标
 
-RELEASE 候选坐标：
+正式坐标：
 
 ```text
 cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1
 ```
 
-此前 SNAPSHOT 已通过本地 Maven install、Nexus deploy、隔离四件套和 JDK 8 远端消费者验证，并包含已验证的 CVE-2026-41710 源码修复。当前 POM 已切换为 RELEASE 候选；仍须重新完成 RELEASE 本地安装、POM 扫描、消费者、单次部署和远端闭环。
+该 RELEASE 已通过本地 Maven install、生成 POM 扫描、单次 Nexus deploy、四件套重新下载、SHA-256、JDK 8 RELEASE-only consumer 和远端 Git ref 验证。
 
 ### 已复用的开发验证
 
@@ -51,24 +52,28 @@ cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1
 
 | CVE | 主状态 | 当前阶段 | 目标处置 |
 | --- | --- | --- | --- |
-| CVE-2026-41710 | 修复中 | 源码与 Nexus SNAPSHOT 已验证，待 RELEASE | 独立 release change、不可变 RELEASE 部署、远端重新下载/摘要/POM/依赖/消费者验证 |
+| CVE-2026-41710 | 已修复 | `1.3.4-nes.patch.1` Nexus/Git 闭环完成 | 下游采用该 RELEASE 并评估有状态重试缓存语义 |
 
 listener 生命周期修复、GAV 重品牌、JaCoCo 或全量测试通过不能改变该状态。
 
-### 当前剩余发布门禁
+### 发布验证
 
-- RELEASE 本地安装、生成 POM 的内部 SNAPSHOT 扫描和 RELEASE 候选消费者已通过，证据见 OpenSpec `evidence/local-verification.md`；
-- release commit、Nexus RELEASE 目标不存在检查、单次部署、远端重新下载和远端消费者验证尚未完成；
-- Git annotated tag 尚未创建。
+- `make install-local` 与实际 `make deploy ALLOW_RELEASE_DEPLOY=true` 均在 JDK 8、单线程 Maven 下成功，328 tests 全绿；
+- POM SHA-256：`c32a3858422583fbf17fc0b21da35350f7e6db6c0af1179a15e867dbb66d1235`；
+- 主 JAR SHA-256：`be3fe5aac3fc9dbe42668ef9ae76cd59f0f0e9b992a573f8b13966c76a1c9972`；
+- sources SHA-256：`47160da016ba5acae219cd59a31013647465d15c408e7303f009b4953acedece`；
+- javadoc SHA-256：`3e30f165af865d33521ea0cf3462c944b874ea8f6a3e150a1e53ba7d139aef77`；
+- 隔离 consumer 使用全新 Maven local、禁用 SNAPSHOT 的 repository policy，1/1 测试通过；
+- 远端 branch、tag object 和 peeled commit 已独立核验。
 
 ### 消费者迁移准备
 
 1. 找出并排除官方 `org.springframework.retry:spring-retry`；
-2. 联调阶段可使用已验证的 Nexus SNAPSHOT，生产升级等待目标 RELEASE 的 Nexus 远端验证；
+2. 使用已发布的 `1.3.4-nes.patch.1`，不要在生产依赖中保留旧 SNAPSHOT；
 3. 确保 Spring Framework 全部来自 NES `5.3.39-nes.patch.1`；
 4. 保持现有 Java import；
 5. 如自定义有状态缓存，同时提供 `retryContextCache` 与 `circuitBreakerRetryContextCache`，并评估 LRU 驱逐权衡；
 6. 运行 dependency tree 和业务 smoke test；
 7. 在消费者仓库同步 GAV、Quick Start、漏洞状态和自身 Release Notes。
 
-正式发布后，本节必须替换为真实 release commit、tag、制品摘要、Nexus URL 和远端验证结果，不能保留计划性陈述冒充发布事实。
+采用动作必须在消费者仓库中独立记录 dependency tree、业务 smoke test 和回滚方案。

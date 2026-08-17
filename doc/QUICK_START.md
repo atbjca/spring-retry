@@ -1,6 +1,6 @@
 # 快速入门
 
-> **重要：NES SNAPSHOT 已完成 CVE-2026-41710 源码修复、构建、Nexus 部署、远端四件套和 Maven/Gradle 消费验证。** CVE 主状态仍为“修复中（源码与 Nexus SNAPSHOT 已验证，待 RELEASE）”；下文 SNAPSHOT 坐标可用于联调，不得宣称为生产 RELEASE。
+> **`1.3.4-nes.patch.1` 已完成 CVE-2026-41710 修复、Nexus RELEASE 四件套、checksum、隔离 consumer 和 Git tag 验证。** 生产消费者应使用下述 RELEASE 坐标。
 
 ## 1. 前置条件
 
@@ -45,25 +45,7 @@
 
 ## 3. Maven 消费坐标
 
-当前开发 SNAPSHOT：
-
-```xml
-<dependency>
-  <groupId>cn.bjca.footstone.bpring.retry</groupId>
-  <artifactId>bjca-footstone-bpring-retry</artifactId>
-  <version>1.3.4-nes.patch.1-SNAPSHOT</version>
-</dependency>
-```
-
-该 SNAPSHOT 已从 Nexus 隔离重新解析并验证。需要只使用本地 Maven repository 时，可在本仓库执行：
-
-```bash
-make install-local
-```
-
-消费者可以通过组织批准的 Nexus 聚合仓库或 Maven local 解析。该 SNAPSHOT 已包含本次源码修复，但只适用于维护联调和验证，生产升级必须等待目标 RELEASE 的 Nexus 远端复验。
-
-正式 RELEASE 完成后才可改为：
+当前 RELEASE：
 
 ```xml
 <dependency>
@@ -72,6 +54,14 @@ make install-local
   <version>1.3.4-nes.patch.1</version>
 </dependency>
 ```
+
+该 RELEASE 已从 Nexus 隔离重新解析并验证。需要只使用本地 Maven repository 时，可在本仓库执行：
+
+```bash
+make install-local
+```
+
+消费者可以通过组织批准的 Nexus 聚合仓库或 Maven local 解析。生产升级仍须在消费者仓库中排除官方坐标并运行自身 smoke test。
 
 如果应用尚未通过其他组件提供 Spring AOP，还需要同一套 NES Framework AOP：
 
@@ -85,7 +75,7 @@ make install-local
 
 ## 4. Gradle 7.6.3 消费坐标
 
-SNAPSHOT 可从组织 Nexus 解析；需要复用本地候选时再保留 `mavenLocal()`：
+RELEASE 可从组织 Nexus 解析；只有本地开发需要时才保留 `mavenLocal()`：
 
 ```groovy
 repositories {
@@ -100,7 +90,7 @@ repositories {
 }
 
 dependencies {
-    implementation "cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1-SNAPSHOT"
+    implementation "cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1"
     implementation "cn.bjca.footstone.bpring:bjca-footstone-bpring-aop:5.3.39-nes.patch.1"
 }
 ```
@@ -112,7 +102,7 @@ JAVA_HOME=/Users/anan/.sdkman/candidates/java/8.0.472-amzn \
   /Users/anan/dev/gradle-7.6.3/bin/gradle --no-daemon test
 ```
 
-RELEASE 完成 Nexus 远端复验后，才把 Retry 版本切换为 `1.3.4-nes.patch.1` 并移除不再需要的 `mavenLocal()`。
+生产消费者应移除不再需要的 `mavenLocal()`，确保从组织 Nexus 解析已验证 RELEASE。
 
 ## 5. 排除官方 Spring Retry 与 Framework
 

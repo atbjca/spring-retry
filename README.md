@@ -2,27 +2,27 @@
 
 本仓库是 Spring Retry 1.3.x 的 NES 维护 fork，为 Spring Framework 5.3.x / Java 8 产品线提供可审计的兼容性、安全修复、GAV 重品牌和不可变发布流程。
 
-> **`1.3.4-nes.patch.1` RELEASE 候选已通过本地安装、POM 扫描和 RELEASE consumer，但尚未部署到 Nexus RELEASE。** 目标版本仍需完成 Nexus 目标不存在检查、单次部署、远端复验和 Git tag；完成这些门禁前，CVE 主状态仍为“修复中”。
+> **`1.3.4-nes.patch.1` 已作为不可变 RELEASE 发布并完成 Nexus、RELEASE-only consumer 和 Git annotated tag 验证。** 发布 commit 为 `1f6dc7a9a02a1b19662c4f1a099fd7dd4069c291`，tag 为 `v1.3.4-nes.patch.1`。
 
 ## 当前状态
 
 | 项目 | 当前事实 |
 | --- | --- |
 | 维护分支 | `1.3.x-bjca-patch` |
-| RELEASE 候选 GAV | `cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1`，尚未部署 |
+| RELEASE GAV | `cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1` |
 | Java | Java 8；代表性公共类 class file major version 52 |
 | Spring Framework | 仅承诺 5.3.x；官方兼容基线 5.3.39 |
 | 默认产品链 Framework | NES `5.3.39-nes.patch.1` |
 | Java package | `org.springframework.retry.*`、`org.springframework.classify.*`，保持不变 |
 | 构建系统 | Maven；Gradle 7.6.3 仅用于消费者 smoke test |
 | 最近全量结果 | 官方 5.3.39 与默认 NES 均为 328 tests、0 failure、0 error、0 skipped |
-| 发布状态 | 本地 RELEASE 门禁通过；Nexus SNAPSHOT 四件套历史验证已完成，RELEASE 仍待远端闭环 |
+| 发布状态 | Nexus RELEASE 四件套、checksum、RELEASE-only consumer、远端 branch/tag 均已验证 |
 
 Spring Framework 4.x、Java 6/7 和 Spring Framework 6.x API 不在支持范围。
 
 ## 当前安全状态
 
-CVE-2026-41710 主状态为“修复中”，阶段为“RELEASE 候选准备与验证中”。普通缓存现为有界访问顺序 LRU，断路器使用独立严格容量缓存；只有目标 RELEASE 的 Nexus 远端资产和 RELEASE-only 消费者验证完成后才能改为“已修复”。
+CVE-2026-41710 主状态为“已修复”，修复版本为 `1.3.4-nes.patch.1`。普通缓存现为有界访问顺序 LRU，断路器使用独立严格容量缓存；目标 RELEASE 已完成远端资产和隔离 consumer 验证。
 
 - [漏洞状态总览](doc/VULNERABILITY_REPORT.md)
 - [CVE-2026-41710 独立文档](doc/CVE/CVE-2026-41710.md)
@@ -47,7 +47,7 @@ make verify-official
 
 可通过 `JAVA8_HOME`、`DEV_ROOT`、`MAVEN` 和 `MAVEN_FLAGS` 覆盖本地路径。`make install-local` 安装 POM 中的当前版本到本地 Maven repository；`make deploy` 根据版本自动选择 snapshots/releases，RELEASE 必须显式设置 `ALLOW_RELEASE_DEPLOY=true`。Makefile 不提供 Git tag/push，Gradle 仍只用于临时消费者，不是本仓库构建系统。
 
-本次 RELEASE 只可在本地门禁、release commit、Nexus 目标不存在检查和协调会话复核完成后执行一次：
+本次 RELEASE 使用以下受控命令完成了一次实际上传：
 
 ```bash
 make deploy ALLOW_RELEASE_DEPLOY=true
@@ -62,12 +62,12 @@ make deploy ALLOW_RELEASE_DEPLOY=true
 | [快速入门](doc/QUICK_START.md) | Maven/Gradle 消费、部署门禁、最小用例和依赖去重 |
 | [用户手册](doc/USER_MANUAL.md) | 声明式/命令式、无状态/有状态、listener、断路器和缓存行为 |
 | [维护要求](doc/REQUIREMENTS.md) | OpenSpec、审批、TDD、覆盖率、影响分析和安全设计 |
-| [GAV 映射](doc/GAV_MAPPING.md) | RELEASE 候选与两套 Framework 坐标 |
+| [GAV 映射](doc/GAV_MAPPING.md) | 已发布 RELEASE 与两套 Framework 坐标 |
 | [兼容性说明](doc/COMPATIBILITY.md) | Java/Spring/Maven 支持矩阵和非支持范围 |
 | [测试指南](doc/TESTING.md) | RED/GREEN、双矩阵、JaCoCo、制品和消费者证据 |
 | [漏洞状态总览](doc/VULNERABILITY_REPORT.md) | 六种 CVE 状态、统计和独立文档索引 |
 | [发布指南](doc/RELEASE_GUIDE.md) | 本地门禁、Nexus、远端复验、tag 和不可变失败处理 |
-| [发布说明](doc/RELEASE_NOTES.md) | `1.3.4-nes.patch.1` 的候选状态、已完成基线和剩余门禁 |
+| [发布说明](doc/RELEASE_NOTES.md) | `1.3.4-nes.patch.1` 的发布结果、制品摘要和 Git 证据 |
 | [安全策略](SECURITY.md) | 支持范围、私密报告渠道和响应流程 |
 
 ## OpenSpec 流程

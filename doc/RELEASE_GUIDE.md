@@ -1,6 +1,6 @@
 # Spring Retry NES 发布指南
 
-本文描述通用、不可变、证据驱动的发布流程。当前 POM 已冻结为 `1.3.4-nes.patch.1` RELEASE 候选，但 Nexus RELEASE 部署、远端复验和 Git tag 尚未完成。
+本文描述通用、不可变、证据驱动的发布流程。`1.3.4-nes.patch.1` 已按该流程完成 Nexus RELEASE、远端复验和 Git annotated tag。
 
 ## 1. 发布前置 change
 

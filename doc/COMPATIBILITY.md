@@ -11,9 +11,9 @@
 | Maven | `/Users/anan/dev/apache-maven-3.8.2/bin/mvn` | 正式维护验证基线 |
 | Gradle | 仓库无 Gradle 构建 | Gradle 7.6.3 + JDK 8 消费者 smoke test 已通过 |
 | Java package | `org.springframework.retry.*`、`org.springframework.classify.*` | JAR 和消费者编译验证保持不变 |
-| 当前制品 | `1.3.4-nes.patch.1-SNAPSHOT` | 本地构建并安装；Nexus SNAPSHOT 已部署和隔离验证 |
+| 当前制品 | `1.3.4-nes.patch.1` | Nexus RELEASE 四件套、隔离 JDK 8 consumer 和 Git tag 已验证 |
 
-当前 SNAPSHOT 已验证 CVE-2026-41710 源码修复和 Nexus 远端制品，但不是安全 RELEASE；CVE 仍处于“修复中（源码与 Nexus SNAPSHOT 已验证，待 RELEASE）”。
+当前 RELEASE 已验证 CVE-2026-41710 源码修复、Nexus 远端制品和消费者行为；CVE 主状态为“已修复”。
 
 ## 2. 支持范围
 
@@ -41,7 +41,7 @@ Spring 4.x 的单独失败不会阻断目标 5.3.x 发布，但不能通过删�
 
 | 场景 | JDK | Spring Framework | 坐标集合 | 结果 | 用途 |
 | --- | --- | --- | --- | --- | --- |
-| 默认产品链 | 真实 JDK 8 | NES 5.3.39 | 仅 NES | 328/328 tests，全绿；JaCoCo check 通过 | SNAPSHOT 产品链与 CVE 修复验证 |
+| 默认产品链 | 真实 JDK 8 | NES 5.3.39 | 仅 NES | 328/328 tests，全绿；JaCoCo check 通过 | RELEASE 产品链与 CVE 修复验证 |
 | 官方 API 兼容 | 真实 JDK 8 | 官方 5.3.39 | 仅官方 | 328/328 tests，全绿；JaCoCo check 通过 | 兼容性证据，禁止部署 |
 | Maven 消费者 | 真实 JDK 8 | NES 5.3.39 | 仅 NES | 2/2 tests，全绿 | 旧/新 setter、双命名 Bean、GAV/POM/import 验证 |
 | Gradle 消费者 | Gradle 7.6.3 + JDK 8 | NES 5.3.39 | 仅 NES | 2/2 tests，全绿 | `mavenLocal()` 等价消费验证 |
@@ -71,10 +71,10 @@ Spring 完成普通 singleton 实例化
 - `MapRetryContextCache` 与 `SoftReferenceMapRetryContextCache` 的无参/单容量构造器默认使用有界访问顺序 LRU；新增 `(capacity, false)` 保留严格 fail-fast。
 - 注解配置优先使用 `retryContextCache` 与 `circuitBreakerRetryContextCache` 两个约定 Bean 名；唯一未命名 Bean 仅回退普通缓存。
 
-## 6. 正式 RELEASE 仍需满足
+## 6. 正式 RELEASE 验证结果
 
-- 将已验证的 CVE-2026-41710 源码修复冻结到 RELEASE 候选；
+- CVE-2026-41710 源码修复已冻结到 release commit `1f6dc7a9a02a1b19662c4f1a099fd7dd4069c291`；
 - 最终 RELEASE POM 不含内部 SNAPSHOT；
-- 使用 RELEASE 候选重新执行双矩阵、覆盖率、JAR 和消费者验证；
-- Nexus 目标不存在检查、单独部署授权和远端重新下载验证完成；
-- README、Quick Start、User Manual、Testing、Vulnerability Report 和 Release Notes 同步为真实 RELEASE 状态。
+- 单线程 Maven/JDK 8 验证执行 328 tests，JaCoCo、Javadoc 和四件套发布通过；
+- Nexus 目标不存在检查、单次部署、远端重新下载、checksum 和隔离消费者验证完成；
+- annotated tag `v1.3.4-nes.patch.1` 已核验指向精确 release commit。

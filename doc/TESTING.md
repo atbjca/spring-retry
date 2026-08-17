@@ -2,7 +2,7 @@
 
 ## 1. 当前验证结论
 
-`1.3.4-nes.patch.1` RELEASE 候选复用以下已经在真实 JDK 8 上完成的开发验证：
+`1.3.4-nes.patch.1` RELEASE 已复用以下真实 JDK 8 开发验证，并完成独立的 RELEASE 本地/远端门禁：
 
 - listener 生命周期与 CVE-2026-41710 严格 TDD：有效 RED、最小 GREEN 和全量回归；
 - 官方 Spring Framework 5.3.39 隔离 `clean verify`；
@@ -13,7 +13,7 @@
 - Maven 与 Gradle 7.6.3 消费者 smoke test。
 - 当前 SNAPSHOT 的完整 `make clean deploy`、Nexus 隔离重新下载、摘要/API/依赖树和 JDK 8 远端消费者 smoke test。
 
-这些结果证明 CVE 攻击路径已在源码与已验证的开发制品中消除。版本冻结没有修改生产源码、测试或构建逻辑，因此宽泛测试可复用；RELEASE 本地安装、元数据扫描、消费者和远端闭环仍须单独记录。
+这些结果以及 RELEASE 四件套、POM scan、checksum 和隔离 consumer 证明 CVE 攻击路径已在已发布版本中消除。版本冻结没有修改生产源码、测试或构建逻辑，因此开发矩阵可复用。
 
 ## 2. 工具链
 
@@ -188,7 +188,7 @@ mvn dependency:list -DincludeScope=runtime -DoutputFile=target/dependency-list-r
 
 结果：
 
-- 开发验证时项目 GAV 为 `cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1-SNAPSHOT`；当前 RELEASE 候选为同坐标的 `1.3.4-nes.patch.1`；
+- 开发验证时项目 GAV 为 `cn.bjca.footstone.bpring.retry:bjca-footstone-bpring-retry:1.3.4-nes.patch.1-SNAPSHOT`；当前已发布 RELEASE 为同坐标的 `1.3.4-nes.patch.1`；
 - Framework BOM、context、aop、beans、core、expression、jcl、test、tx 全部为 NES `5.3.39-nes.patch.1`；
 - 默认依赖树不含 `org.springframework:spring-*`；
 - 官方依赖树全部为 `org.springframework:spring-*:5.3.39`，不含 NES Framework；
@@ -197,7 +197,7 @@ mvn dependency:list -DincludeScope=runtime -DoutputFile=target/dependency-list-r
 
 ## 9. 制品与字节码
 
-RELEASE 候选 `make install-local` 应生成：
+RELEASE `make install-local` 和 deploy 已生成：
 
 ```text
 bjca-footstone-bpring-retry-1.3.4-nes.patch.1.jar
@@ -257,7 +257,11 @@ JAVA_HOME=/Users/anan/.sdkman/candidates/java/8.0.472-amzn \
 - 远端 POM dependency tree 只含 NES Framework `5.3.39-nes.patch.1`，不含官方 Spring；
 - JDK 8 临时远端消费者 1 test、0 failure、0 error、0 skipped。
 
-RELEASE 门禁只验证了版本选择和显式确认逻辑，本 change 没有实际部署 RELEASE。
+### Nexus RELEASE/JDK 8
+
+`make deploy ALLOW_RELEASE_DEPLOY=true` 在精确 release commit 上成功，重新运行 328 tests、JaCoCo、Javadoc，并上传主 JAR、POM、sources 和 javadoc。远端四件套与 deploy 后本地候选 SHA-256 一致，POM 无内部 SNAPSHOT，代表类 major version 52。
+
+隔离 consumer 使用 `/private/tmp/spring-retry-release-consumer-20260817/m2-release-only` 和全部 `snapshots=false` 的 settings，从 Nexus 重新解析 RELEASE，1 test、0 failure、0 error、0 skipped；dependency tree 只包含 Retry `1.3.4-nes.patch.1` 和 NES Framework `5.3.39-nes.patch.1`。
 
 ## 11. 本次证据位置
 
